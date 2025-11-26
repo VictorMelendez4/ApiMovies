@@ -9,6 +9,6 @@ interface MovieApi {
     // Endpoint de RapidAPI para Top Movies.
     // Verifica en RapidAPI si la URL termina en "movies/top250" o similar.
     // Usaremos este ejemplo basado en lo común:
-    @GET("movies/top250")
+    @GET("api/imdb/top250-movies")
     suspend fun getPopularMovies(): Response<List<MovieModel>>
 }
