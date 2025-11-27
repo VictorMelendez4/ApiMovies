@@ -15,7 +15,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    // 1. Proveer el cliente con las llaves de seguridad (Headers)
+
     @Singleton
     @Provides
     fun provideOkHttpClient(): OkHttpClient {
@@ -30,7 +30,7 @@ object AppModule {
             .build()
     }
 
-    // 2. Proveer Retrofit configurado
+    // Retrofit configurado
     @Singleton
     @Provides
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
@@ -41,7 +41,7 @@ object AppModule {
             .build()
     }
 
-    // 3. ¡ESTA ES LA QUE TE FALTA! Proveer la API
+
     @Singleton
     @Provides
     fun provideMovieApi(retrofit: Retrofit): MovieApi {

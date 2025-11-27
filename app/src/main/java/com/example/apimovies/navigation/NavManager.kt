@@ -16,12 +16,12 @@ fun NavManager(viewModel: MoviesViewModel) {
 
     NavHost(navController = navController, startDestination = "Home") {
 
-        // RUTA 1: Pantalla Principal (Home)
+
         composable("Home") {
             HomeView(viewModel, navController)
         }
 
-        // RUTA 2: Pantalla de Detalle (Recibe los datos de la película)
+
         composable(
             route = "Detail/{id}/{title}/{photoUrl}/{description}",
             arguments = listOf(
@@ -31,13 +31,13 @@ fun NavManager(viewModel: MoviesViewModel) {
                 navArgument("description") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            // Recuperamos los datos que nos mandaron desde el Home
+
             val id = backStackEntry.arguments?.getString("id") ?: ""
             val title = backStackEntry.arguments?.getString("title") ?: ""
             val photoUrl = backStackEntry.arguments?.getString("photoUrl") ?: ""
             val description = backStackEntry.arguments?.getString("description") ?: ""
 
-            // Mostramos la pantalla de detalle con esos datos
+
             DetailView(viewModel, navController, id, title, photoUrl, description)
         }
     }

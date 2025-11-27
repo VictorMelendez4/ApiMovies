@@ -6,16 +6,22 @@ import javax.inject.Inject
 
 class MovieRepository @Inject constructor(private val api: MovieApi) {
 
-    suspend fun getPopularMovies(): List<MovieModel> {
-        return try {
-            val response = api.getPopularMovies()
-            if (response.isSuccessful) {
-                response.body() ?: emptyList()
-            } else {
-                emptyList()
+    suspend fun getMediaByCategory(categoryIndex: Int): List<MovieModel> {
+        val response = try {
+            when (categoryIndex) {
+                0 -> api.getTop250Movies()
+                1 -> api.getPopularMovies()
+                2 -> api.getTop250TV()
+                3 -> api.getPopularTV()
+                else -> api.getTop250Movies()
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            return emptyList()
+        }
+
+        return if (response.isSuccessful) {
+            response.body() ?: emptyList()
+        } else {
             emptyList()
         }
     }
