@@ -8,27 +8,36 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.apimovies.components.MovieCard
+import com.example.apimovies.ui.theme.HighlightRed
+import com.example.apimovies.ui.theme.PrimaryDark
+import com.example.apimovies.ui.theme.TextWhite
 import com.example.apimovies.viewModel.MoviesViewModel
+import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -36,41 +45,84 @@ import java.nio.charset.StandardCharsets
 @Composable
 fun HomeView(viewModel: MoviesViewModel = hiltViewModel(), navController: NavController) {
     val state by viewModel.state.collectAsState()
-    val selectedCategory by viewModel.selectedCategory.collectAsState()
 
-    // Las etiquetas de las pestañas
+    // Categorías disponibles
     val categories = listOf("Top Películas", "Pelis Populares", "Top Series", "Series Populares")
 
+    // ESTADO DEL PAGER
+    val pagerState = rememberPagerState(pageCount = { categories.size })
+
+    // Scope para animaciones
+    val scope = rememberCoroutineScope()
+
+    //SINCRONIZACIÓN
+    LaunchedEffect(pagerState.currentPage) {
+        viewModel.changeCategory(pagerState.currentPage)
+    }
+
     Scaffold(
+        containerColor = PrimaryDark,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(text = "ApiMovies", color = Color.White, fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFE91E63)
+            Column(
+                modifier = Modifier
+                    .background(PrimaryDark)
+                    .padding(top = 40.dp, bottom = 10.dp)
+            ) {
+                Text(
+                    text = "ApiMovies",
+                    color = HighlightRed,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.padding(start = 16.dp)
                 )
-            )
+
+                // TABS
+                ScrollableTabRow(
+                    selectedTabIndex = pagerState.currentPage,
+                    containerColor = Color.Transparent,
+                    contentColor = TextWhite,
+                    edgePadding = 16.dp,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.SecondaryIndicator(
+                            Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
+                            height = 3.dp,
+                            color = HighlightRed
+                        )
+                    },
+                    divider = {}
+                ) {
+                    categories.forEachIndexed { index, title ->
+                        Tab(
+                            selected = pagerState.currentPage == index,
+                            onClick = {
+
+                                scope.launch {
+                                    pagerState.animateScrollToPage(index)
+                                }
+                            },
+                            text = {
+                                Text(
+                                    text = title,
+                                    fontWeight = if (pagerState.currentPage == index) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (pagerState.currentPage == index) TextWhite else Color.Gray
+                                )
+                            }
+                        )
+                    }
+                }
+            }
         }
     ) { paddingValues ->
 
-        Column(modifier = Modifier.padding(paddingValues)) {
-            // 1. SECCIÓN DE PESTAÑAS (TABS)
-            ScrollableTabRow(
-                selectedTabIndex = selectedCategory,
-                containerColor = Color(0xFFE91E63),
-                contentColor = Color.White,
-                edgePadding = 0.dp,
-                indicator = {} // Ocultamos la línea de abajo para estilo simple, o déjala default
-            ) {
-                categories.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedCategory == index,
-                        onClick = { viewModel.changeCategory(index) },
-                        text = { Text(text = title, color = if (selectedCategory == index) Color.White else Color.LightGray) }
-                    )
-                }
-            }
+        //PAGER
 
-            // 2. CONTENIDO DE LA LISTA
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) { page ->
+
             ContentHomeView(state, navController)
         }
     }
@@ -84,26 +136,30 @@ fun ContentHomeView(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black) // Fondo negro para que resalten las pelis
+            .background(PrimaryDark)
     ) {
         if (state.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color.White)
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = HighlightRed)
         } else if (state.error != null) {
-            Text(text = state.error ?: "Error", modifier = Modifier.align(Alignment.Center), color = Color.White)
+            Text(text = state.error ?: "Error", modifier = Modifier.align(Alignment.Center), color = TextWhite)
         } else {
-            LazyColumn(contentPadding = PaddingValues(10.dp)) {
+            LazyColumn(
+                contentPadding = PaddingValues(top = 10.dp, bottom = 10.dp)
+            ) {
                 items(state.movies) { movie ->
                     MovieCard(movie = movie) {
-                        val id = movie.id
-                        val title = movie.title ?: "SinTitulo"
-                        val description = movie.description ?: "SinDescripcion"
-                        val image = movie.primaryImage ?: ""
+                        val id = movie.id.ifBlank { "no-id" }
+                        val title = movie.title ?: "Sin Título"
+                        val description = if (movie.description.isNullOrBlank()) "Descripción no disponible" else movie.description
+                        val image = if (movie.primaryImage.isNullOrBlank()) "" else movie.primaryImage
+                        val rating = movie.rating?.toFloat() ?: 0.0f
+                        val year = movie.year ?: 0
 
                         val encodedUrl = URLEncoder.encode(image, StandardCharsets.UTF_8.toString())
                         val encodedDesc = URLEncoder.encode(description, StandardCharsets.UTF_8.toString())
                         val encodedTitle = URLEncoder.encode(title, StandardCharsets.UTF_8.toString())
 
-                        navController.navigate("Detail/$id/$encodedTitle/$encodedUrl/$encodedDesc")
+                        navController.navigate("Detail/$id/$encodedTitle/$encodedUrl/$encodedDesc/$rating/$year")
                     }
                 }
             }

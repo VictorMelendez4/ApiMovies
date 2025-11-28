@@ -1,41 +1,52 @@
 package com.example.apimovies.views
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.example.apimovies.ui.theme.AccentColor
+import com.example.apimovies.ui.theme.PrimaryDark
+import com.example.apimovies.ui.theme.TextGray
+import com.example.apimovies.ui.theme.TextWhite
 import com.example.apimovies.viewModel.MoviesViewModel
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun DetailView(
     viewModel: MoviesViewModel,
@@ -43,82 +54,148 @@ fun DetailView(
     id: String,
     title: String?,
     photoUrl: String?,
-    description: String?
+    description: String?,
+    rating: Double, // <--- Nuevo dato recibido
+    year: Int       // <--- Nuevo dato recibido
 ) {
     val cleanTitle = title?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "Sin título"
     val cleanDesc = description?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "Sin descripción"
     val cleanUrl = photoUrl?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: ""
 
     Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(text = "Detalle", color = Color.White) },
-                navigationIcon = {
-                    // Botón de regreso (Flecha atrás)
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Regresar",
-                            tint = Color.White
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFE91E63) // Mismo color rosa que el Home
-                )
-            )
-        }
+        containerColor = PrimaryDark
     ) { paddingValues ->
-        // Columna con Scroll por si la descripción es muy larga
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
-        ) {
-            // 1. Imagen grande
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            // 1. IMAGEN
             Image(
                 painter = rememberAsyncImagePainter(cleanUrl),
                 contentDescription = null,
-
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(400.dp) // Aumentamos un poco la altura para que luzca más
-                    .clip(RoundedCornerShape(16.dp))
+                    .height(600.dp)
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 2. Título
-            Text(
-                text = cleanTitle,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+            // 2. GRADIENTE
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(600.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Transparent,
+                                PrimaryDark.copy(alpha = 0.8f),
+                                PrimaryDark
+                            ),
+                            startY = 0f
+                        )
+                    )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // 3. BOTÓN REGRESAR
+            IconButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier
+                    .padding(top = 40.dp, start = 16.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.5f))
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
 
-            // 3. Etiqueta "Sinopsis"
-            Text(
-                text = "Sinopsis",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.Start)
-            )
+            // 4. CONTENIDO
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                Spacer(modifier = Modifier.height(450.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Column(
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                ) {
+                    // TÍTULO
+                    Text(
+                        text = cleanTitle,
+                        style = MaterialTheme.typography.displaySmall,
+                        color = TextWhite,
+                        fontWeight = FontWeight.ExtraBold,
+                        lineHeight = 40.sp
+                    )
 
-            // 4. Descripción completa
-            Text(
-                text = cleanDesc,
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Justify
-            )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // ETIQUETAS (CHIPS) CON DATOS REALES
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Rating Chip
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(AccentColor)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "IMDb ${String.format("%.1f", rating)}",
+                                    color = Color.Black,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        // Año Chip
+                        Icon(imageVector = Icons.Default.DateRange, contentDescription = null, tint = TextGray, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "$year", // <--- DATO REAL
+                            color = TextGray,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // SINOPSIS
+                    Text(
+                        text = "SINOPSIS",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = TextGray,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = cleanDesc,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = TextGray,
+                        textAlign = TextAlign.Start,
+                        lineHeight = 24.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(100.dp))
+                }
+            }
         }
     }
 }

@@ -16,29 +16,34 @@ fun NavManager(viewModel: MoviesViewModel) {
 
     NavHost(navController = navController, startDestination = "Home") {
 
-
         composable("Home") {
             HomeView(viewModel, navController)
         }
 
 
         composable(
-            route = "Detail/{id}/{title}/{photoUrl}/{description}",
+            route = "Detail/{id}/{title}/{photoUrl}/{description}/{rating}/{year}",
             arguments = listOf(
                 navArgument("id") { type = NavType.StringType },
                 navArgument("title") { type = NavType.StringType },
                 navArgument("photoUrl") { type = NavType.StringType },
-                navArgument("description") { type = NavType.StringType }
+                navArgument("description") { type = NavType.StringType },
+
+                navArgument("rating") { type = NavType.FloatType },
+                navArgument("year") { type = NavType.IntType }
             )
         ) { backStackEntry ->
-
             val id = backStackEntry.arguments?.getString("id") ?: ""
             val title = backStackEntry.arguments?.getString("title") ?: ""
             val photoUrl = backStackEntry.arguments?.getString("photoUrl") ?: ""
             val description = backStackEntry.arguments?.getString("description") ?: ""
 
 
-            DetailView(viewModel, navController, id, title, photoUrl, description)
+            val rating = backStackEntry.arguments?.getFloat("rating")?.toDouble() ?: 0.0
+            val year = backStackEntry.arguments?.getInt("year") ?: 0
+
+
+            DetailView(viewModel, navController, id, title, photoUrl, description, rating, year)
         }
     }
 }
