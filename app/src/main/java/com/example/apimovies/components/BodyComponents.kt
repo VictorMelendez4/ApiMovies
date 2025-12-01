@@ -36,6 +36,14 @@ import com.example.apimovies.ui.theme.AccentColor
 import com.example.apimovies.ui.theme.SecondaryDark
 import com.example.apimovies.ui.theme.TextGray
 import com.example.apimovies.ui.theme.TextWhite
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import com.example.apimovies.ui.theme.SecondaryDark
+import com.example.apimovies.ui.theme.TextWhite
+import com.example.apimovies.ui.theme.AccentColor
 
 @Composable
 fun MovieCard(movie: MovieModel, onClick: () -> Unit) {
@@ -107,4 +115,37 @@ fun MovieCard(movie: MovieModel, onClick: () -> Unit) {
             }
         }
     }
+}
+@Composable
+fun SearchBar(
+    query: String,
+    onSearchChange: (String) -> Unit
+) {
+    TextField(
+        value = query,
+        onValueChange = onSearchChange,
+        placeholder = { Text(text = "Buscar película...", color = Color.Gray) },
+        leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onSearchChange("") }) {
+                    Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = Color.Gray)
+                }
+            }
+        },
+        singleLine = true,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = SecondaryDark,
+            unfocusedContainerColor = SecondaryDark,
+            focusedTextColor = TextWhite,
+            unfocusedTextColor = TextWhite,
+            cursorColor = AccentColor,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent
+        ),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    )
 }

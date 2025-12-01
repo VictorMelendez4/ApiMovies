@@ -1,5 +1,6 @@
 package com.example.apimovies.repository
 
+import android.util.Log
 import com.example.apimovies.data.MovieApi
 import com.example.apimovies.model.MovieModel
 import javax.inject.Inject
@@ -16,13 +17,22 @@ class MovieRepository @Inject constructor(private val api: MovieApi) {
                 else -> api.getTop250Movies()
             }
         } catch (e: Exception) {
+            Log.e("REPO_ERROR", "Error de red: ${e.message}")
+            e.printStackTrace()
             return emptyList()
         }
 
-        return if (response.isSuccessful) {
-            response.body() ?: emptyList()
+        if (response.isSuccessful) {
+            val body = response.body()
+            if (body == null) {
+                Log.e("REPO_ERROR", "Respuesta exitosa pero cuerpo vacío")
+            } else {
+                Log.d("REPO_EXITO", "Se recibieron ${body.size} elementos")
+            }
+            return body ?: emptyList()
         } else {
-            emptyList()
+            Log.e("REPO_ERROR", "Error API: Código ${response.code()} - ${response.message()}")
+            return emptyList()
         }
     }
 }

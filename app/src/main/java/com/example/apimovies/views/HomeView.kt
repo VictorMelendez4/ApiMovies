@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.apimovies.components.MovieCard
+import com.example.apimovies.components.SearchBar // <--- ¡IMPORTANTE!
 import com.example.apimovies.ui.theme.HighlightRed
 import com.example.apimovies.ui.theme.PrimaryDark
 import com.example.apimovies.ui.theme.TextWhite
@@ -46,16 +47,12 @@ import java.nio.charset.StandardCharsets
 fun HomeView(viewModel: MoviesViewModel = hiltViewModel(), navController: NavController) {
     val state by viewModel.state.collectAsState()
 
-    // Categorías disponibles
+    val searchQuery by viewModel.searchQuery.collectAsState()
+
     val categories = listOf("Top Películas", "Pelis Populares", "Top Series", "Series Populares")
-
-    // ESTADO DEL PAGER
     val pagerState = rememberPagerState(pageCount = { categories.size })
-
-    // Scope para animaciones
     val scope = rememberCoroutineScope()
 
-    //SINCRONIZACIÓN
     LaunchedEffect(pagerState.currentPage) {
         viewModel.changeCategory(pagerState.currentPage)
     }
@@ -68,15 +65,22 @@ fun HomeView(viewModel: MoviesViewModel = hiltViewModel(), navController: NavCon
                     .background(PrimaryDark)
                     .padding(top = 40.dp, bottom = 10.dp)
             ) {
+                // 1. TÍTULO
                 Text(
                     text = "ApiMovies",
                     color = HighlightRed,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.padding(start = 16.dp)
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
 
-                // TABS
+                // BUSCADOR
+                SearchBar(
+                    query = searchQuery,
+                    onSearchChange = { viewModel.onSearchChange(it) }
+                )
+
+                // 3. TABS
                 ScrollableTabRow(
                     selectedTabIndex = pagerState.currentPage,
                     containerColor = Color.Transparent,
@@ -95,7 +99,6 @@ fun HomeView(viewModel: MoviesViewModel = hiltViewModel(), navController: NavCon
                         Tab(
                             selected = pagerState.currentPage == index,
                             onClick = {
-
                                 scope.launch {
                                     pagerState.animateScrollToPage(index)
                                 }
@@ -114,15 +117,12 @@ fun HomeView(viewModel: MoviesViewModel = hiltViewModel(), navController: NavCon
         }
     ) { paddingValues ->
 
-        //PAGER
-
         HorizontalPager(
             state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-        ) { page ->
-
+        ) {
             ContentHomeView(state, navController)
         }
     }
