@@ -20,13 +20,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,7 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.example.apimovies.model.MovieModel
 import com.example.apimovies.ui.theme.AccentColor
+import com.example.apimovies.ui.theme.HighlightRed
 import com.example.apimovies.ui.theme.PrimaryDark
 import com.example.apimovies.ui.theme.TextGray
 import com.example.apimovies.ui.theme.TextWhite
@@ -55,19 +63,48 @@ fun DetailView(
     title: String?,
     photoUrl: String?,
     description: String?,
-    rating: Double, // <--- Nuevo dato recibido
-    year: Int       // <--- Nuevo dato recibido
+    rating: Double,
+    year: Int
 ) {
     val cleanTitle = title?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "Sin título"
     val cleanDesc = description?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "Sin descripción"
     val cleanUrl = photoUrl?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: ""
 
+    val isFavorite by viewModel.isCurrentMovieFavorite.collectAsState()
+
+    LaunchedEffect(id) {
+        viewModel.checkFavorite(id)
+    }
+
     Scaffold(
-        containerColor = PrimaryDark
+        containerColor = PrimaryDark,
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    val movie = MovieModel(
+                        id = id,
+                        title = cleanTitle,
+                        primaryImage = cleanUrl,
+                        description = cleanDesc,
+                        rating = rating,
+                        year = year,
+                        originalTitle = "",
+                    )
+                    viewModel.toggleFavorite(movie)
+                },
+                containerColor = HighlightRed,
+                contentColor = Color.White
+            ) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Favorito"
+                )
+            }
+        }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
 
-            // 1. IMAGEN
+            // IMAGEN DE FONDO
             Image(
                 painter = rememberAsyncImagePainter(cleanUrl),
                 contentDescription = null,
@@ -77,7 +114,7 @@ fun DetailView(
                     .height(600.dp)
             )
 
-            // 2. GRADIENTE
+            // GRADIENTE OSCURO
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -95,22 +132,7 @@ fun DetailView(
                     )
             )
 
-            // 3. BOTÓN REGRESAR
-            IconButton(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier
-                    .padding(top = 40.dp, start = 16.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.5f))
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White
-                )
-            }
-
-            // 4. CONTENIDO
+            // CONTENIDO (TEXTO E INFORMACIÓN)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -123,7 +145,6 @@ fun DetailView(
                 Column(
                     modifier = Modifier.padding(horizontal = 24.dp)
                 ) {
-                    // TÍTULO
                     Text(
                         text = cleanTitle,
                         style = MaterialTheme.typography.displaySmall,
@@ -134,9 +155,7 @@ fun DetailView(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // ETIQUETAS (CHIPS) CON DATOS REALES
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Rating Chip
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
@@ -162,11 +181,10 @@ fun DetailView(
 
                         Spacer(modifier = Modifier.width(12.dp))
 
-                        // Año Chip
                         Icon(imageVector = Icons.Default.DateRange, contentDescription = null, tint = TextGray, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "$year", // <--- DATO REAL
+                            text = "$year",
                             color = TextGray,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
@@ -175,7 +193,6 @@ fun DetailView(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // SINOPSIS
                     Text(
                         text = "SINOPSIS",
                         style = MaterialTheme.typography.labelLarge,
@@ -195,6 +212,22 @@ fun DetailView(
 
                     Spacer(modifier = Modifier.height(100.dp))
                 }
+            }
+
+            // BOTÓN REGRESAR
+            IconButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier
+                    .padding(top = 40.dp, start = 16.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
             }
         }
     }

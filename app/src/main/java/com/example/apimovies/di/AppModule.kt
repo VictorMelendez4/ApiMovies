@@ -10,6 +10,11 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
+import android.app.Application
+import androidx.room.Room
+import com.example.apimovies.data.database.MovieDao
+import com.example.apimovies.data.database.MoviesDatabase
+
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -47,4 +52,24 @@ object AppModule {
     fun provideMovieApi(retrofit: Retrofit): MovieApi {
         return retrofit.create(MovieApi::class.java)
     }
+
+    // 4. Proveer la Base de Datos
+    @Singleton
+    @Provides
+    fun provideDatabase(app: Application): MoviesDatabase {
+        return Room.databaseBuilder(
+            app,
+            MoviesDatabase::class.java,
+            "movies_db"
+        ).fallbackToDestructiveMigration() // Si cambias la estructura, borra todo y empieza de cero (útil en dev)
+            .build()
+    }
+
+    // 5. Proveer el DAO (para no tener que llamar a db.dao() cada vez)
+    @Singleton
+    @Provides
+    fun provideMovieDao(db: MoviesDatabase): MovieDao {
+        return db.movieDao()
+    }
+
 }

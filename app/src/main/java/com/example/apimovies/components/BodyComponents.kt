@@ -106,7 +106,7 @@ fun MovieCard(movie: MovieModel, onClick: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "${movie.rating ?: "0.0"}",
+                        text = String.format("%.1f", movie.rating ?: 0.0),
                         style = MaterialTheme.typography.bodyMedium,
                         color = AccentColor,
                         fontWeight = FontWeight.Bold

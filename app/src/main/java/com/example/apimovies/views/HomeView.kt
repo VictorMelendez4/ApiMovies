@@ -7,9 +7,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items // Importante para la lista
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
@@ -22,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -44,16 +46,20 @@ import java.nio.charset.StandardCharsets
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeView(viewModel: MoviesViewModel = hiltViewModel(), navController: NavController) {
-    //Observamos los estados del ViewModel
     val state by viewModel.state.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
-    //Configuración de Pestañas y Pager
-    val categories = listOf("Top Películas", "Pelis Populares", "Top Series", "Series Populares")
+    val categories = listOf(
+        "Top Películas",
+        "Pelis Populares",
+        "Top Series",
+        "Series Populares",
+        "Favoritos"
+    )
+
     val pagerState = rememberPagerState(pageCount = { categories.size })
     val scope = rememberCoroutineScope()
 
-    //  Sincronización
     LaunchedEffect(pagerState.currentPage) {
         viewModel.changeCategory(pagerState.currentPage)
     }
@@ -66,7 +72,6 @@ fun HomeView(viewModel: MoviesViewModel = hiltViewModel(), navController: NavCon
                     .background(PrimaryDark)
                     .padding(top = 40.dp, bottom = 10.dp)
             ) {
-                // TÍTULO DE LA APP
                 Text(
                     text = "ApiMovies",
                     color = HighlightRed,
@@ -75,13 +80,11 @@ fun HomeView(viewModel: MoviesViewModel = hiltViewModel(), navController: NavCon
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
 
-                // BARRA DE BÚSQUEDA
                 SearchBar(
                     query = searchQuery,
                     onSearchChange = { viewModel.onSearchChange(it) }
                 )
 
-                // PESTAÑAS
                 ScrollableTabRow(
                     selectedTabIndex = pagerState.currentPage,
                     containerColor = Color.Transparent,
@@ -100,7 +103,6 @@ fun HomeView(viewModel: MoviesViewModel = hiltViewModel(), navController: NavCon
                         Tab(
                             selected = pagerState.currentPage == index,
                             onClick = {
-
                                 scope.launch {
                                     pagerState.animateScrollToPage(index)
                                 }
@@ -118,7 +120,6 @@ fun HomeView(viewModel: MoviesViewModel = hiltViewModel(), navController: NavCon
             }
         }
     ) { paddingValues ->
-
 
         HorizontalPager(
             state = pagerState,
@@ -144,10 +145,9 @@ fun ContentHomeView(
             .background(PrimaryDark)
     ) {
         if (state.isLoading) {
-
             ShimmerLoadingAnimation()
         } else if (state.error != null) {
-
+            // El error puede ser "No tienes favoritos", y se verá bien aquí
             ErrorView(
                 message = state.error ?: "Error desconocido",
                 onRetry = { viewModel.changeCategory(currentIndex) }
@@ -158,7 +158,6 @@ fun ContentHomeView(
             ) {
                 items(state.movies) { movie ->
                     MovieCard(movie = movie) {
-
                         val id = movie.id.ifBlank { "no-id" }
                         val title = movie.title ?: "Sin Título"
                         val description = if (movie.description.isNullOrBlank()) "Descripción no disponible" else movie.description
