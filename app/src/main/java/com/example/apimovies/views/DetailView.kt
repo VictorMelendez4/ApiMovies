@@ -1,5 +1,7 @@
 package com.example.apimovies.views
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,11 +24,16 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -66,6 +74,8 @@ fun DetailView(
     rating: Double,
     year: Int
 ) {
+    val context = LocalContext.current // <--- Necesario para abrir enlaces y compartir
+
     val cleanTitle = title?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "Sin título"
     val cleanDesc = description?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "Sin descripción"
     val cleanUrl = photoUrl?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: ""
@@ -114,7 +124,7 @@ fun DetailView(
                     .height(600.dp)
             )
 
-            // GRADIENTE OSCURO
+            // GRADIENTE
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -132,7 +142,22 @@ fun DetailView(
                     )
             )
 
-            // CONTENIDO (TEXTO E INFORMACIÓN)
+            // BOTÓN REGRESAR
+            IconButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier
+                    .padding(top = 40.dp, start = 16.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.5f))
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+
+            // CONTENIDO
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -210,24 +235,55 @@ fun DetailView(
                         lineHeight = 24.sp
                     )
 
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // --- NUEVOS BOTONES DE ACCIÓN ---
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // 1. BOTÓN VER EN IMDB
+                        Button(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.imdb.com/title/$id/"))
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFF5C518), // Amarillo IMDb
+                                contentColor = Color.Black
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Ver en IMDb", fontWeight = FontWeight.Bold)
+                        }
+
+                        // 2. BOTÓN COMPARTIR
+                        OutlinedButton(
+                            onClick = {
+                                val sendIntent: Intent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_TEXT, "¡Mira esta película: $cleanTitle! \n\nhttps://www.imdb.com/title/$id/")
+                                    type = "text/plain"
+                                }
+                                val shareIntent = Intent.createChooser(sendIntent, "Compartir película")
+                                context.startActivity(shareIntent)
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextWhite),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, TextWhite)
+                        ) {
+                            Icon(imageVector = Icons.Default.Share, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Compartir")
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(100.dp))
                 }
-            }
-
-            // BOTÓN REGRESAR
-            IconButton(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier
-                    .padding(top = 40.dp, start = 16.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White
-                )
             }
         }
     }
