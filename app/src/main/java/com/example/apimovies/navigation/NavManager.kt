@@ -10,40 +10,42 @@ import com.example.apimovies.viewModel.MoviesViewModel
 import com.example.apimovies.views.DetailView
 import com.example.apimovies.views.HomeView
 
+/**
+ * Este componente define todas las rutas posibles dentro de la aplicación y gestiona
+ * el flujo entre pantallas. Actúa como el contenedor principal que intercambia
+ * las vistas según la URL actual.
+ */
 @Composable
 fun NavManager(viewModel: MoviesViewModel) {
+    // Controlador de navegación: Recuerda el historial de pantallas
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = "Home") {
+    // Configuración del Host de navegación
+    NavHost(
+        navController = navController,
+        startDestination = "Home" // Pantalla inicial al abrir la app
+    ) {
 
-        composable("Home") {
+        // RUTA 1: PANTALLA DE INICIO (HOME)
+        // Ruta estática simple.
+        composable(route = "Home") {
             HomeView(viewModel, navController)
         }
 
-
+        // RUTA 2: PANTALLA DE DETALLE
+        // Ruta dinámica que requiere un parámetro: el ID de la película.
         composable(
-            route = "Detail/{id}/{title}/{photoUrl}/{description}/{rating}/{year}",
+            route = "Detail/{id}",
             arguments = listOf(
-                navArgument("id") { type = NavType.StringType },
-                navArgument("title") { type = NavType.StringType },
-                navArgument("photoUrl") { type = NavType.StringType },
-                navArgument("description") { type = NavType.StringType },
-
-                navArgument("rating") { type = NavType.FloatType },
-                navArgument("year") { type = NavType.IntType }
+                // Definimos que el argumento 'id' es de tipo String
+                navArgument("id") { type = NavType.StringType }
             )
         ) { backStackEntry ->
+            // Recuperamos el argumento 'id' de la ruta actual
             val id = backStackEntry.arguments?.getString("id") ?: ""
-            val title = backStackEntry.arguments?.getString("title") ?: ""
-            val photoUrl = backStackEntry.arguments?.getString("photoUrl") ?: ""
-            val description = backStackEntry.arguments?.getString("description") ?: ""
 
-
-            val rating = backStackEntry.arguments?.getFloat("rating")?.toDouble() ?: 0.0
-            val year = backStackEntry.arguments?.getInt("year") ?: 0
-
-
-            DetailView(viewModel, navController, id, title, photoUrl, description, rating, year)
+            // Renderizamos la vista de detalle pasando el ID recuperado
+            DetailView(viewModel, navController, id)
         }
     }
 }

@@ -8,16 +8,27 @@ import com.example.apimovies.model.MovieModel
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-// Inyectamos TAMBIÉN el MovieDao aquí
+/**
+ * Repositorio central de la aplicación
+ * Esta clase actúa como intermediario entre las fuentes de datos (API Remota y Base de Datos Local)
+ * y la lógica de negocio. Se encarga de decidir de dónde obtener la información
+ * y de transformar los datos si es necesario.
+ */
 class MovieRepository @Inject constructor(
-    private val api: MovieApi,
-    private val movieDao: MovieDao
+    private val api: MovieApi,       // Fuente de datos remota (Internet)
+    private val movieDao: MovieDao   // Fuente de datos local (Base de Datos)
 ) {
 
-    // --- PARTE DE API (INTERNET) ---
+    // --- SECCIÓN DE DATOS REMOTOS (API) ---
 
+    /**
+     * Obtiene una lista de películas o series desde Internet según la categoría seleccionada.
+     *
+     * @param categoryIndex El índice de la pestaña (0: Top Pelis, 1: Populares, etc.).
+     * @return Una lista de objetos MovieModel. Si falla, retorna una lista vacía para no romper la app.
+     * Incluye manejo de excepciones para capturar errores de red (404, sin internet, etc.).
+     */
     suspend fun getMediaByCategory(categoryIndex: Int): List<MovieModel> {
-        // (Este código se queda igual que antes)
         val response = try {
             when (categoryIndex) {
                 0 -> api.getTop250Movies()
@@ -38,12 +49,17 @@ class MovieRepository @Inject constructor(
         }
     }
 
-    // --- PARTE DE BASE DE DATOS (FAVORITOS) ---
+    // SECCIÓN DE DATOS LOCALES
 
-    // Obtener la lista de favoritos (reactiva)
+    /**
+     * Flujo de datos en tiempo real de las películas favoritas.
+     */
     val favorites: Flow<List<MovieEntity>> = movieDao.getFavorites()
 
-    // Guardar película en favoritos
+    /**
+     * Guarda una película en la base de datos local.
+     * Realiza un mapeo (conversión) de 'MovieModel' (usado en la UI) a 'MovieEntity' (usado en la BD).
+     */
     suspend fun addFavorite(movie: MovieModel) {
         val entity = MovieEntity(
             id = movie.id,
@@ -51,12 +67,16 @@ class MovieRepository @Inject constructor(
             image = movie.primaryImage ?: "",
             rating = movie.rating ?: 0.0,
             year = movie.year ?: 0,
-            description = movie.description ?: ""
+            description = movie.description ?: "",
+            type = movie.type ?: "movie"
         )
         movieDao.insert(entity)
     }
 
-    // Quitar película de favoritos
+    /**
+     * Elimina una película de la base de datos local.
+     * También requiere convertir el modelo a entidad para que Room sepa qué borrar.
+     */
     suspend fun removeFavorite(movie: MovieModel) {
         val entity = MovieEntity(
             id = movie.id,
@@ -64,13 +84,36 @@ class MovieRepository @Inject constructor(
             image = movie.primaryImage ?: "",
             rating = movie.rating ?: 0.0,
             year = movie.year ?: 0,
-            description = movie.description ?: ""
+            description = movie.description ?: "",
+            type = movie.type ?: "movie"
         )
         movieDao.delete(entity)
     }
 
-    // Verificar si ya es favorita
+    /**
+     * Verifica si una película ya existe en favoritos buscando por su ID.
+     * Retorna true si existe, false si no.
+     */
     suspend fun isFavorite(id: String): Boolean {
         return movieDao.checkFavorite(id)
+    }
+
+    /**
+     * Recupera una película específica de la base de datos local y la convierte
+     * al modelo de dominio (MovieModel) para que pueda ser mostrada en el detalle.
+     * Útil para ver detalles de favoritos cuando no hay conexión a internet.
+     */
+    suspend fun getMovieFromDB(id: String): MovieModel? {
+        val entity = movieDao.getMovieById(id) ?: return null
+        return MovieModel(
+            id = entity.id,
+            title = entity.title,
+            primaryImage = entity.image,
+            rating = entity.rating,
+            year = entity.year,
+            description = entity.description,
+            type = entity.type,
+            originalTitle = ""
+        )
     }
 }

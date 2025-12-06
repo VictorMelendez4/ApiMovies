@@ -18,8 +18,16 @@ import com.example.apimovies.ui.theme.PrimaryDark
 import com.example.apimovies.ui.theme.TextGray
 import com.example.apimovies.ui.theme.TextWhite
 
+/**
+ * Pantalla de error reutilizable.
+ * Se muestra cuando falla la carga de datos (API o BD).
+ * * @param message El mensaje de error específico a mostrar.
+ * @param onRetry Función lambda que se ejecuta al presionar el botón "Reintentar".
+ */
 @Composable
 fun ErrorView(message: String, onRetry: () -> Unit) {
+    // Contenedor principal: Columna centrada que ocupa toda la pantalla
+    // Usa el color de fondo principal
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -28,27 +36,37 @@ fun ErrorView(message: String, onRetry: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Icono de advertencia
         Icon(
             imageVector = Icons.Default.Warning,
             contentDescription = "Error",
             tint = HighlightRed,
             modifier = Modifier.size(80.dp)
         )
+
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Título del error
         Text(
             text = "¡Ups! Algo salió mal",
             style = MaterialTheme.typography.headlineMedium,
             color = TextWhite,
             fontWeight = FontWeight.Bold
         )
+
         Spacer(modifier = Modifier.height(8.dp))
+
+        // Mensaje detallado del error
         Text(
             text = message,
             style = MaterialTheme.typography.bodyLarge,
             color = TextGray,
             textAlign = TextAlign.Center
         )
+
         Spacer(modifier = Modifier.height(24.dp))
+
+        // Botón de acción para reintentar la operación fallida
         Button(
             onClick = onRetry,
             colors = ButtonDefaults.buttonColors(containerColor = HighlightRed),
